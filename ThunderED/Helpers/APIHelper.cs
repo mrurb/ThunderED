@@ -157,7 +157,7 @@ namespace ThunderED.Helpers
 
         private static readonly WaitRequestData WaitReq = new WaitRequestData();
 
-        public static async Task<T> RequestWrapper<T>(string request, string reason, string auth = null, string eToken = null, bool noRetries = false, bool silent = false, string encoding = null)
+        public static async Task<T> RequestWrapper<T>(string request, string reason, string auth = null, string eToken = null, bool noRetries = false, bool silent = false, string encoding = null, StringContent postContent = null)
             where T : class
         {
             string raw = null;
@@ -180,12 +180,12 @@ namespace ThunderED.Helpers
                         if (!string.IsNullOrEmpty(auth))
                             httpClient.DefaultRequestHeaders.Add("Authorization", auth);
                         if(!string.IsNullOrEmpty(eToken))
-                            httpClient.DefaultRequestHeaders.Add("Etoken", eToken);                        
+                            httpClient.DefaultRequestHeaders.Add("Etoken", eToken);
 
-                        using (var responseMessage = await httpClient.GetAsync(request))
+                        using (var responseMessage = postContent == null ? await httpClient.GetAsync(request) : await httpClient.PostAsync(request, postContent))
                         {
                             raw = await responseMessage.Content.ReadAsStringAsync();
-                            if (responseMessage.Content.Headers.ContentEncoding.Any(a=> "br".Equals(a, StringComparison.OrdinalIgnoreCase)))
+                            if (responseMessage.Content.Headers.ContentEncoding.Any(a => "br".Equals(a, StringComparison.OrdinalIgnoreCase)))
                             {
                                 using (var b = new BrotliStream(await responseMessage.Content.ReadAsStreamAsync(), CompressionMode.Decompress, true))
                                 {
@@ -203,9 +203,9 @@ namespace ThunderED.Helpers
                                 var errParsed = JsonConvert.DeserializeObject<JsonClasses.ESIError>(raw);
                                 if (errParsed != null)
                                 {
-                                    if(errParsed.timeout > 0)
+                                    if (errParsed.timeout > 0)
                                         WaitReq.Update(errParsed.timeout);
-                                    if(SettingsManager.Settings.Config.ExtendedESILogging)
+                                    if (SettingsManager.Settings.Config.ExtendedESILogging)
                                         await LogHelper.LogError($"[{reason}] Request failure: {request}\nMessage: {errParsed.error}", LogCat.ESI, false);
                                     return null;
                                 }
@@ -213,7 +213,7 @@ namespace ThunderED.Helpers
                             }
 
                             if (typeof(T) == typeof(string))
-                                return (T) (object) raw;
+                                return (T)(object)raw;
 
                             if (!typeof(T).IsClass)
                                 return null;

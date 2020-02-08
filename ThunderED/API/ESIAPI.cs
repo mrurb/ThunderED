@@ -57,6 +57,7 @@ namespace ThunderED.API
         {
             var result = await GetEntry<JsonClasses.CharacterData>($"{SettingsManager.Settings.Config.ESIAddress}latest/characters/{id}/?datasource=tranquility&language={_language}", reason, id, 1,
                 forceUpdate, noCache);
+            var characterAffiliation = await APIHelper.ESIAPI.GetCharacterAffiliation("", id);
             if(result != null)
                 result.character_id = Convert.ToInt64(id);
             return result;
@@ -74,6 +75,15 @@ namespace ThunderED.API
             if (id == null) return null;
             return await GetEntry<JsonClasses.AllianceData>($"{SettingsManager.Settings.Config.ESIAddress}latest/alliances/{id}/?datasource=tranquility&language={_language}", reason, id, 1,
                 forceUpdate, noCache);
+        }
+
+        internal async Task<JsonClasses.CharacterAffiliation> GetCharacterAffiliation(string reason, object id, bool forceUpdate = false, bool noCache = false)
+        {
+            var content = new StringContent($"[{id}]");
+
+            var result = await GetEntry<JsonClasses.CharacterAffiliation>($"{SettingsManager.Settings.Config.ESIAddress}latest/characters/affiliation/?datasource=tranquility&language={_language}", reason, id, 1,
+                forceUpdate, noCache, content);
+            return result;
         }
 
         internal async Task<object> GetMemberEntityProperty(string reason, object id, string propertyName)
@@ -297,14 +307,14 @@ namespace ThunderED.API
 
  
         
-        private async Task<T> GetEntry<T>(string url, string reason, object id, int days, bool forceUpdate = false, bool noCache = false) 
+        private async Task<T> GetEntry<T>(string url, string reason, object id, int days, bool forceUpdate = false, bool noCache = false, StringContent postContent = null) 
             where T : class
         {
             if (id == null || id.ToString() == "0") return null;
             var data = await GetFromDbCache<T>(id, days);
             if(data == null || forceUpdate)
             {
-                data = await APIHelper.RequestWrapper<T>(url, reason);
+                data = await APIHelper.RequestWrapper<T>(url, reason, postContent: postContent);
                 if(data != null && !noCache)
                     await UpdateDbCache(data, id, days);
             }
