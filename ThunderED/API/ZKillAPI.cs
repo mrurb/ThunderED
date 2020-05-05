@@ -106,7 +106,7 @@ namespace ThunderED.API
 
         internal async Task<List<JsonClasses.ESIKill>> GetCharacterKills(object characterId)
         {
-			var zKills = await APIHelper.RequestWrapper<List<JsonZKill.ZkillOnly>>($"https://zkillboard.com/api/kills/characterID/{characterId}/page/1/", _reason);
+			var zKills = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>($"/api/kills/characterID/{characterId}/page/1/", _reason);
             var list = new ConcurrentBag<JsonClasses.ESIKill>();
             var q = zKills.Count > 20 ? zKills.TakeSmart(20) : zKills;
 
@@ -121,13 +121,13 @@ namespace ThunderED.API
 
         internal async Task<JsonZKill.CharacterStats> GetCharacterStats(object characterId)
         {
-			return await APIHelper.RequestWrapper<JsonZKill.CharacterStats>($"https://zkillboard.com/api/stats/characterID/{characterId}/", _reason);
+			return await zkillService.GetWrap<JsonZKill.CharacterStats>($"/api/stats/characterID/{characterId}/", _reason);
         }
 
         
         internal async Task<List<JsonClasses.ESIKill>> GetCharacterLosses(object characterId)
         {
-			var zLosses =  await APIHelper.RequestWrapper<List<JsonZKill.ZkillOnly>>($"https://zkillboard.com/api/losses/characterID/{characterId}/page/1/", _reason);
+			var zLosses = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>($"/api/losses/characterID/{characterId}/page/1/", _reason);
             var list = new List<JsonClasses.ESIKill>();
             var q = zLosses.Count > 20 ? zLosses.TakeSmart(20) : zLosses;
 
@@ -143,7 +143,7 @@ namespace ThunderED.API
         internal async Task<List<JsonZKill.ZkillOnly>> GetZKillOnlyFeed(bool isAlliance, int id)
         {			
             var eText = isAlliance ? "allianceID" : "corporationID";
-			return await APIHelper.RequestWrapper<List<JsonZKill.ZkillOnly>>($"https://zkillboard.com/api/{eText}/{id}/zkbOnly/orderDirection/desc/pastSeconds/3600/", _reason);
+			return await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>($"/api/{eText}/{id}/zkbOnly/orderDirection/desc/pastSeconds/3600/", _reason);
 		
         }
 
@@ -169,7 +169,6 @@ namespace ThunderED.API
                 var page = 1;
                 var killsList = new List<JsonZKill.ZkillOnly>();
                 var query = $"/api/kills/{txt}/{id}/npc/0/page/{{0}}";
-                //var test = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>("/api/losses/corporationID/98342486/npc/0/page/1/startTime/202005050000/endTime/202005051400/");
                 var sysList = new List<long>();
                 if (lastSeconds > 0)
                     query += $"/pastSeconds/{lastSeconds}/";
@@ -187,15 +186,14 @@ namespace ThunderED.API
 
                 while (true)
                 {
-                    var res = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>(string.Format(query, page));
-                    //await Task.Delay(1000);
+                    var res = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>(string.Format(query, page), _reason);
                     if (res != null)
                         killsList.AddRange(res);
                     if (res == null || res.Count == 0 || res.Count < maxPerPage) break;
                     page++;
                 }
                 var lossList = new List<JsonZKill.ZkillOnly>();
-                query = $"https://zkillboard.com/api/losses/{txt}/{id}/npc/0/page/{{0}}";
+                query = $"/api/losses/{txt}/{id}/npc/0/page/{{0}}";
                 if (lastSeconds > 0)
                     query += $"/pastSeconds/{lastSeconds}/";
                 else if (from.HasValue)
@@ -212,9 +210,7 @@ namespace ThunderED.API
                 page = 1;
                 while (true)
                 {
-
-                    var res = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>(string.Format(query, page));
-                    //await Task.Delay(1000);
+                    var res = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>(string.Format(query, page), _reason);
 
                     if (res != null)
                         lossList.AddRange(res);
@@ -264,7 +260,7 @@ namespace ThunderED.API
         {
             if (nosupers)
             {
-                var res =  await APIHelper.RequestWrapper<JsonZKill.CorpStatsNoSupers>($"https://zkillboard.com/api/stats/corporationID/{id}/", _reason);
+                var res = await zkillService.GetWrap<JsonZKill.CorpStatsNoSupers>($"/api/stats/corporationID/{id}/", _reason);
                 return new JsonZKill.CorpStats
                 {
                     hasSupers = false,
@@ -283,12 +279,12 @@ namespace ThunderED.API
                     topIskKillIDs = res.topIskKillIDs
                 };
             }
-            return await APIHelper.RequestWrapper<JsonZKill.CorpStats>($"https://zkillboard.com/api/stats/corporationID/{id}/", _reason);
+            return await zkillService.GetWrap<JsonZKill.CorpStats>($"/api/stats/corporationID/{id}/", _reason);
         }
 
         public async Task<JsonZKill.CorpStats> GetLiteCorporationData(long id)
         {
-            var res =  await APIHelper.RequestWrapper<JsonZKill.CorpStatsLite>($"https://zkillboard.com/api/stats/corporationID/{id}/", _reason);
+            var res =  await zkillService.GetWrap<JsonZKill.CorpStatsLite>($"/api/stats/corporationID/{id}/", _reason);
             return new JsonZKill.CorpStats { hasSupers = res.hasSupers};
         }
 
