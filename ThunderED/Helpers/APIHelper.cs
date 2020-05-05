@@ -63,12 +63,12 @@ namespace ThunderED.Helpers
             thread.Start();
         }
 
-        public static void Prepare()
+        public static void Prepare(ZkillService v)
         {
             _token = new CancellationTokenSource();
             RunDiscordThread();
             ESIAPI = new ESIAPI();
-            ZKillAPI = new ZKillAPI();
+            ZKillAPI = new ZKillAPI(v);
             FleetUpAPI = new FleetUpAPI();
         }
 

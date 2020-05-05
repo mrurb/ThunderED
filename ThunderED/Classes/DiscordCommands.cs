@@ -829,12 +829,12 @@ namespace ThunderED.Classes
                         return;
                     case "shutdown":
                         await APIHelper.DiscordAPI.ReplyMessageAsync(Context, LM.Get("sysShutdownStarted"), true);
-                        await Program.Shutdown();
+                        await App.Shutdown();
                         await APIHelper.DiscordAPI.ReplyMessageAsync(Context, LM.Get("sysShutdownComplete"), true);
                         return;
                     case "restart":
                         await APIHelper.DiscordAPI.ReplyMessageAsync(Context, LM.Get("sysRestartStarted"), true);
-                        await Program.Restart(Context.Channel.Id);
+                        await App.Restart(Context.Channel.Id);
                         return;
                     case "flush":
                     {

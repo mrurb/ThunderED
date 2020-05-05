@@ -22,6 +22,12 @@ namespace ThunderED.API
         private readonly string _reason = LogCat.ZKill.ToString();
         private PureWebSocket _webSocket;
         private readonly ConcurrentQueue<JsonZKill.Killmail> _webMailsQueue = new ConcurrentQueue<JsonZKill.Killmail>();
+        private readonly ZkillService zkillService;
+
+        public ZKillAPI(ZkillService zkillService)
+        {
+            this.zkillService = zkillService;
+        }
 
         internal async Task<JsonZKill.Killmail> GetSocketResponce()
         {
@@ -162,7 +168,8 @@ namespace ThunderED.API
                 int maxPerPage = 200;
                 var page = 1;
                 var killsList = new List<JsonZKill.ZkillOnly>();
-                var query = $"https://zkillboard.com/api/kills/{txt}/{id}/npc/0/page/{{0}}";
+                var query = $"/api/kills/{txt}/{id}/npc/0/page/{{0}}";
+                //var test = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>("/api/losses/corporationID/98342486/npc/0/page/1/startTime/202005050000/endTime/202005051400/");
                 var sysList = new List<long>();
                 if (lastSeconds > 0)
                     query += $"/pastSeconds/{lastSeconds}/";
@@ -180,8 +187,8 @@ namespace ThunderED.API
 
                 while (true)
                 {
-                    var res = await APIHelper.RequestWrapper<List<JsonZKill.ZkillOnly>>(string.Format(query, page), _reason);
-                    await Task.Delay(1000);
+                    var res = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>(string.Format(query, page));
+                    //await Task.Delay(1000);
                     if (res != null)
                         killsList.AddRange(res);
                     if (res == null || res.Count == 0 || res.Count < maxPerPage) break;
@@ -206,8 +213,8 @@ namespace ThunderED.API
                 while (true)
                 {
 
-                    var res = await APIHelper.RequestWrapper<List<JsonZKill.ZkillOnly>>(string.Format(query, page), _reason);
-                    await Task.Delay(1000);
+                    var res = await zkillService.GetWrap<List<JsonZKill.ZkillOnly>>(string.Format(query, page));
+                    //await Task.Delay(1000);
 
                     if (res != null)
                         lossList.AddRange(res);

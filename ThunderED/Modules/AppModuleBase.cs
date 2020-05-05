@@ -42,7 +42,7 @@ namespace ThunderED.Modules
 
         internal async Task RunInternal(object prm)
         {
-            if (Program.IsClosing) return;
+            if (App.IsClosing) return;
             await Run(prm);
         }
 
