@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,25 +21,72 @@ namespace ThunderED
 
         private static async Task Main(string[] args)
         {
-            var services = ConfigureServices();
+            await SetupSettingsAsync();
+
+            var services = ConfigureServicesAsync();
 
             var serviceProvider = services.BuildServiceProvider();
 
             await serviceProvider.GetService<App>().RunAsync(args, VERSION);
         }
 
-        private static IServiceCollection ConfigureServices()
+        internal static  IServiceCollection ConfigureServicesAsync()
         {
+
             IServiceCollection services = new ServiceCollection();
 
             services.AddSingleton<App>();
 
-            services.AddLogging();
+            services.AddScoped<DiscordAPI>()
+                .AddScoped<ESIAPI>()
+                .AddScoped<ZKillAPI>()
+                .AddScoped<FleetUpAPI>();
+
+            //Using microsoft.logging could be a future improvment to support things like application insights
+            //services.AddLogging();
 
             services.AddHttpClient<ZkillService>()
                 .AddPolicyHandler(ZKillResilicencyStrategy.DefineAndRetrieveResiliencyStrategy());
 
             return services;
+        }
+
+
+        internal static async Task SetupSettingsAsync()
+        {
+            if (!File.Exists(SettingsManager.FileSettingsPath))
+            {
+                await LogHelper.LogError("Please make sure you have settings.json file in bot folder! Create it and fill with correct settings.");
+                try
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Please make sure you have settings.json file in bot folder! Create it and fill with correct settings.");
+                    Console.ReadKey();
+                }
+                catch
+                {
+                    // ignored
+                }
+
+                return;
+            }
+
+            //load settings
+            var result = await SettingsManager.Prepare();
+            if (!string.IsNullOrEmpty(result))
+            {
+                await LogHelper.LogError(result);
+                try
+                {
+                    Console.ReadKey();
+                }
+                catch
+                {
+                    // ignored
+                }
+
+                return;
+            }
         }
 
     }
@@ -51,12 +99,21 @@ namespace ThunderED
             return Program.VERSION;
         }
 
-        public static async Task<bool> Start(IServiceProvider serviceProvider)
+        public static async Task<bool> Start()
         {
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
-            APIHelper.Prepare(serviceProvider.GetService<ZkillService>());
+            var services = Program.ConfigureServicesAsync();
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            var discordAPI = serviceProvider.GetService<DiscordAPI>();
+            var eSIAPI = serviceProvider.GetService<ESIAPI>();
+            var zKillAPI = serviceProvider.GetService<ZKillAPI>();
+            var fleetUpAPI = serviceProvider.GetService<FleetUpAPI>();
+
+            APIHelper.Prepare(discordAPI, eSIAPI, zKillAPI, fleetUpAPI);
             await LogHelper.LogInfo($"ThunderED v{Program.VERSION} is running!").ConfigureAwait(false);
             //load database provider
             var rs = await SQLHelper.LoadProvider();

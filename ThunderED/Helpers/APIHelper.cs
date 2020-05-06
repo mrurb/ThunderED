@@ -37,13 +37,13 @@ namespace ThunderED.Helpers
             _token.Cancel();
         }
 
-        private static void RunDiscordThread()
+        private static void RunDiscordThread(DiscordAPI discordAPI)
         {
             var thread = new Thread(async () =>
             {
                 try
                 {
-                    DiscordAPI = new DiscordAPI();
+                    DiscordAPI = discordAPI;
 
                     while (!_token.IsCancellationRequested)
                     {
@@ -57,19 +57,19 @@ namespace ThunderED.Helpers
                     await LogHelper.LogEx("Discord Thread", ex, LogCat.Discord);
                     DiscordAPI?.Stop();
                     if(!_token.IsCancellationRequested)
-                        RunDiscordThread();
+                        RunDiscordThread(discordAPI);
                 }
             });
             thread.Start();
         }
 
-        public static void Prepare(ZkillService v)
+        public static void Prepare(DiscordAPI discordAPI, ESIAPI eSIAPI, ZKillAPI zKillAPI, FleetUpAPI fleetUpAPI)
         {
             _token = new CancellationTokenSource();
-            RunDiscordThread();
-            ESIAPI = new ESIAPI();
-            ZKillAPI = new ZKillAPI(v);
-            FleetUpAPI = new FleetUpAPI();
+            RunDiscordThread(discordAPI);
+            ESIAPI = eSIAPI;
+            ZKillAPI = zKillAPI;
+            FleetUpAPI = fleetUpAPI;
         }
 
         public static void PurgeCache()

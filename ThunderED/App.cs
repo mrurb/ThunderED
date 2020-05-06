@@ -15,11 +15,17 @@ namespace ThunderED
     {
         private static Timer _timer;
         private static NamedPipeClientStream pipe;
-        private readonly ZkillService zkillService;
+        private readonly DiscordAPI discordAPI;
+        private readonly ESIAPI eSIAPI;
+        private readonly ZKillAPI zKillAPI;
+        private readonly FleetUpAPI fleetUpAPI;
 
-        public App(ZkillService zkillService)
+        public App(DiscordAPI discordAPI , ESIAPI eSIAPI, ZKillAPI zKillAPI, FleetUpAPI fleetUpAPI)
         {
-            this.zkillService = zkillService;
+            this.discordAPI = discordAPI;
+            this.eSIAPI = eSIAPI;
+            this.zKillAPI = zKillAPI;
+            this.fleetUpAPI = fleetUpAPI;
         }
 
         public async Task RunAsync(string[] args, string VERSION)
@@ -35,39 +41,6 @@ namespace ThunderED
             // var x = string.IsNullOrWhiteSpace("");
 
             // var ssss = new List<JsonZKill.ZkillOnly>().Count(a => a.killmail_id == 0);
-            if (!File.Exists(SettingsManager.FileSettingsPath))
-            {
-                await LogHelper.LogError("Please make sure you have settings.json file in bot folder! Create it and fill with correct settings.");
-                try
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Please make sure you have settings.json file in bot folder! Create it and fill with correct settings.");
-                    Console.ReadKey();
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                return;
-            }
-
-            //load settings
-            var result = await SettingsManager.Prepare();
-            if (!string.IsNullOrEmpty(result))
-            {
-                await LogHelper.LogError(result);
-                try
-                {
-                    Console.ReadKey();
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                return;
-            }
 
             if (replyChannelId > 0)
                 LogHelper.WriteConsole($"Launch after restart");
@@ -85,13 +58,13 @@ namespace ThunderED
                 await Shutdown();
             });
 
-            APIHelper.Prepare(zkillService);
+            APIHelper.Prepare(discordAPI, eSIAPI, zKillAPI, fleetUpAPI);
             await LogHelper.LogInfo($"ThunderED v{VERSION} is running!").ConfigureAwait(false);
             //load database provider
             var rs = await SQLHelper.LoadProvider();
             if (!string.IsNullOrEmpty(rs))
             {
-                await LogHelper.LogError(result);
+                await LogHelper.LogError(rs);
                 try
                 {
                     Console.ReadKey();
