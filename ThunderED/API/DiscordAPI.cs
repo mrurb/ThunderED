@@ -166,6 +166,13 @@ namespace ThunderED.API
 
         public async Task<IUserMessage> SendMessageAsync(IMessageChannel channel, string message, Embed embed = null)
         {
+            if (embed != null)
+            {
+                if (embed.Author != null)
+                {
+                    message = embed.Author.GetValueOrDefault() + Environment.NewLine + message;
+                }
+            }
             try
             {
                 return await channel.SendMessageAsync(message.TrimLengthOrSpace(MAX_MSG_LENGTH), false, embed);

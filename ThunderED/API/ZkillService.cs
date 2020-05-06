@@ -12,9 +12,12 @@ using SQLitePCL;
 using System.Linq;
 using ThunderED.Helpers;
 using ThunderED.Classes;
+using ThunderED.API;
+using ThunderED.PollyPolicies;
 
 namespace ThunderED.API
 {
+
     public class ZkillService
     {
         private readonly HttpClient httpClient;
@@ -25,6 +28,7 @@ namespace ThunderED.API
             client.DefaultRequestHeaders.Add("User-Agent", SettingsManager.DefaultUserAgent);
             httpClient = client;
         }
+
 
         public async Task<T> GetWrap<T>(string url, string reason) where T : class
         {
@@ -58,6 +62,20 @@ namespace ThunderED.API
             }
             else return data;
             return null;
+        }
+    }
+}
+
+
+namespace Microsoft.Extensions.DependencyInjection
+{
+    public static class ZkillServiceExtensions
+    {
+        public static IServiceCollection AddZkillService(this IServiceCollection services)
+        {
+            services.AddHttpClient<ZkillService>()
+                .AddPolicyHandler(ZKillResilicencyStrategy.DefineAndRetrieveResiliencyStrategy());
+            return services;
         }
     }
 }
