@@ -45,8 +45,7 @@ namespace ThunderED
             //Using microsoft.logging could be a future improvment to support things like application insights
             //services.AddLogging();
 
-            services.AddHttpClient<ZkillService>()
-                .AddPolicyHandler(ZKillResilicencyStrategy.DefineAndRetrieveResiliencyStrategy());
+            services.AddZkillService();
 
             return services;
         }
