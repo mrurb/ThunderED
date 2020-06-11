@@ -455,9 +455,73 @@ namespace ThunderED.Helpers
             }
             return false;
         }
+
+        public static async Task<T> PostWrapper<T>(string request, HttpContent content, string reason, string auth = null, bool noRetries = false, bool silent = false)
+        where T : class
+        {
+            string raw = null;
+            var retCount = SettingsManager.Settings.Config.RequestRetries;
+            retCount = retCount == 0 || noRetries ? 1 : retCount;
+            for (int i = 0; i < retCount; i++)
+            {
+                try
+                {
+                    var handler = new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate };
+                    using (var httpClient = new HttpClient(handler))
+                    {
+                        httpClient.DefaultRequestHeaders.Clear();
+                        httpClient.DefaultRequestHeaders.Add("User-Agent", SettingsManager.DefaultUserAgent);
+                        if (!string.IsNullOrEmpty(auth))
+                            httpClient.DefaultRequestHeaders.Add("Authorization", auth);
+                        httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+                        httpClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+
+                        using (var responceMessage = await httpClient.PostAsync(request, content))
+                        {
+                            raw = await responceMessage.Content.ReadAsStringAsync();
+                            if (!responceMessage.IsSuccessStatusCode)
+                            {
+                                if (responceMessage.StatusCode != HttpStatusCode.NotFound && responceMessage.StatusCode != HttpStatusCode.Forbidden &&
+                                    (responceMessage.StatusCode != HttpStatusCode.BadGateway && responceMessage.StatusCode != HttpStatusCode.GatewayTimeout) && !silent)
+                                    await LogHelper.LogError($"[try: {i}][{reason}] Potential {responceMessage.StatusCode} request failure: {request}", LogCat.ESI, false);
+
+                                if (raw.StartsWith("{\"error\""))
+                                {
+                                    if (SettingsManager.Settings.Config.ExtendedESILogging)
+                                        await LogHelper.LogError($"[{reason}] Request failure: {request}\n{raw}", LogCat.ESI, false);
+                                }
+                                continue;
+                            }
+                            var data = JsonConvert.DeserializeObject<T>(raw);
+                            if (data == null)
+                                await LogHelper.LogError($"[try: {i}][{reason}] Deserialized to null!{Environment.NewLine}Request: {request}", LogCat.ESI, false);
+                            else return data;
+
+                        }
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    //skip, probably due to timeout
+                }
+                catch (Exception ex)
+                {
+                    if (TickManager.IsNoConnection && request.StartsWith(SettingsManager.Settings.Config.ESIAddress))
+
+                    if (!silent)
+                    {
+                        await LogHelper.LogEx(request, ex, LogCat.ESI);
+                        await LogHelper.LogInfo($"[try: {i}][{reason}]{Environment.NewLine}REQUEST: {request}{Environment.NewLine}RESPONCE: {raw}", LogCat.ESI);
+                    }
+                }
+
+            }
+            return null;
+        }
     }
 
-    internal class WaitRequestData
+
+internal class WaitRequestData
     {
         private DateTime _from = DateTime.Now;
         private volatile int _waitSeconds;

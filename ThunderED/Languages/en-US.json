@@ -616,5 +616,6 @@
   "webButtonLogout": "Log out",
   "authWebNoFeedsHeader": "No feeds enabled",
   "webFatalError": "Fatal error! See logs for details",
-  "webAuthenticationExpired": "Authentication expired, please reauth"
+  "webAuthenticationExpired": "Authentication expired, please reauth",
+  "CorpAppNewMsgNpcWarning": ":warning: Character is **not** in an NPC Corp and might have roles."
 }

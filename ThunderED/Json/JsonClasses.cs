@@ -633,6 +633,13 @@ namespace ThunderED.Json
             public long title_id;
         }
 
+        public class CharacterAffiliation
+        {
+            public int alliance_id { get; set; }
+            public int character_id { get; set; }
+            public int corporation_id { get; set; }
+        }
+
         public class ESIError
         {
             public string error;

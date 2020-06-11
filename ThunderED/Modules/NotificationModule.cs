@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using Discord;
+
 using ThunderED.Classes;
 using ThunderED.Helpers;
 using ThunderED.Json;
@@ -13,7 +15,7 @@ using ThunderED.Modules.Sub;
 
 namespace ThunderED.Modules
 {
-    public sealed partial class NotificationModule: AppModuleBase
+    public sealed partial class NotificationModule : AppModuleBase
     {
         private DateTime _nextNotificationCheck = DateTime.FromFileTime(0);
         private long _lastNotification;
@@ -41,7 +43,7 @@ namespace ThunderED.Modules
 
         public override async Task Run(object prm)
         {
-            if(IsRunning) return;
+            if (IsRunning) return;
             IsRunning = true;
             try
             {
@@ -116,10 +118,10 @@ namespace ThunderED.Modules
 
                             var etag = _tags.GetOrNull(charId);
                             var result = await APIHelper.ESIAPI.GetNotifications(Reason, charId, token, etag);
-                            if(result == null) continue;
+                            if (result == null) continue;
                             _tags.AddOrUpdateEx(charId, result.Data.ETag);
                             //abort if no connection
-                            if(result.Data.IsNoConnection)
+                            if (result.Data.IsNoConnection)
                                 return;
                             if (result.Data.IsNotModified || result.Result == null)
                             {
@@ -131,26 +133,26 @@ namespace ThunderED.Modules
 
                             var notifications = result.Result;
 
-                         /*   notifications.Add(new JsonClasses.Notification
-                            {
-                                text = @"aggressorAllianceID: 99008425
-aggressorCorpID: 98278226
-aggressorID: 95494038
-planetID: 40212927
-planetTypeID: 2016
-reinforceExitTime: 132147728200000000
-solarSystemID: 30003358
-typeID: 2233",
+                            /*   notifications.Add(new JsonClasses.Notification
+                               {
+                                   text = @"aggressorAllianceID: 99008425
+   aggressorCorpID: 98278226
+   aggressorID: 95494038
+   planetID: 40212927
+   planetTypeID: 2016
+   reinforceExitTime: 132147728200000000
+   solarSystemID: 30003358
+   typeID: 2233",
 
 
-                                notification_id = 999990000,
-                                type = "OrbitalReinforced",
-                                timestamp = "2019-06-29T17:20:00Z"
-                            });*/
+                                   notification_id = 999990000,
+                                   type = "OrbitalReinforced",
+                                   timestamp = "2019-06-29T17:20:00Z"
+                               });*/
 
                             var feederChar = await APIHelper.ESIAPI.GetCharacterData(Reason, charId);
                             var feederCorp = await APIHelper.ESIAPI.GetCorporationData(Reason, feederChar?.corporation_id);
-                            var feederAlliance = feederChar?.alliance_id > 0 ? await APIHelper.ESIAPI.GetCorporationData(Reason, feederChar?.alliance_id): null;
+                            var feederAlliance = feederChar?.alliance_id > 0 ? await APIHelper.ESIAPI.GetCorporationData(Reason, feederChar?.alliance_id) : null;
 
 
                             //process filters
@@ -310,256 +312,256 @@ typeID: 2233",
                                             switch (notification.type)
                                             {
                                                 case "OrbitalAttacked":
-                                                {
-                                                    var struc = await APIHelper.ESIAPI.GetTypeId(Reason, GetData("typeID", data));
-                                                    var planet = await APIHelper.ESIAPI.GetPlanet(Reason, GetData("planetID", data));
+                                                    {
+                                                        var struc = await APIHelper.ESIAPI.GetTypeId(Reason, GetData("typeID", data));
+                                                        var planet = await APIHelper.ESIAPI.GetPlanet(Reason, GetData("planetID", data));
 
-                                                    var agressor = (await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("aggressorID", data)))?.name;
-                                                    var aggCorp = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("aggressorCorpID", data)))?.name;
-                                                    var aggAllyId = GetData("aggressorAllianceID", data);
-                                                    var aggAlly = string.IsNullOrEmpty(aggAllyId) || aggAllyId == "0"
-                                                        ? null
-                                                        : (await APIHelper.ESIAPI.GetAllianceData(Reason, aggAllyId))?.ticker;
-                                                    var aggText = $"{agressor} - {aggCorp}{(string.IsNullOrEmpty(aggAlly) ? null : $"[{aggAlly}]")}";
+                                                        var agressor = (await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("aggressorID", data)))?.name;
+                                                        var aggCorp = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("aggressorCorpID", data)))?.name;
+                                                        var aggAllyId = GetData("aggressorAllianceID", data);
+                                                        var aggAlly = string.IsNullOrEmpty(aggAllyId) || aggAllyId == "0"
+                                                            ? null
+                                                            : (await APIHelper.ESIAPI.GetAllianceData(Reason, aggAllyId))?.ticker;
+                                                        var aggText = $"{agressor} - {aggCorp}{(string.IsNullOrEmpty(aggAlly) ? null : $"[{aggAlly}]")}";
 
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
 
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgCitUnderAttack)
-                                                        .WithAuthor(author => author.WithName(LM.Get("NotifyHeader_OrbitalAttacked",
-                                                                struc?.name, feederCorp?.name))
-                                                            .WithUrl($"https://zkillboard.com/character/{GetData("aggressorID", data)}"))
-                                                        .AddField(LM.Get("Location"), $"{systemName} - {planet?.name ?? LM.Get("Unknown")}", true)
-                                                        .AddField(LM.Get("Aggressor"), aggText, true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgCitUnderAttack)
+                                                            .WithAuthor(author => author.WithName(LM.Get("NotifyHeader_OrbitalAttacked",
+                                                                    struc?.name, feederCorp?.name))
+                                                                .WithUrl($"https://zkillboard.com/character/{GetData("aggressorID", data)}"))
+                                                            .AddField(LM.Get("Location"), $"{systemName} - {planet?.name ?? LM.Get("Unknown")}", true)
+                                                            .AddField(LM.Get("Aggressor"), aggText, true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "OrbitalReinforced":
-                                                {
-                                                    var struc = await APIHelper.ESIAPI.GetTypeId(Reason, GetData("typeID", data));
-                                                    var planet = await APIHelper.ESIAPI.GetPlanet(Reason, GetData("planetID", data));
+                                                    {
+                                                        var struc = await APIHelper.ESIAPI.GetTypeId(Reason, GetData("typeID", data));
+                                                        var planet = await APIHelper.ESIAPI.GetPlanet(Reason, GetData("planetID", data));
 
-                                                    var agressor = (await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("aggressorID", data)))?.name;
-                                                    var aggCorp = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("aggressorCorpID", data)))?.name;
-                                                    var aggAllyId = GetData("aggressorAllianceID", data);
-                                                    var aggAlly = string.IsNullOrEmpty(aggAllyId) || aggAllyId == "0"
-                                                        ? null
-                                                        : (await APIHelper.ESIAPI.GetAllianceData(Reason, aggAllyId))?.ticker;
-                                                    var aggText = $"{agressor} - {aggCorp}{(string.IsNullOrEmpty(aggAlly) ? null : $"[{aggAlly}]")}";
-                                                    var exitTime = DateTime.FromFileTime(Convert.ToInt64(GetData("reinforceExitTime", data)));
+                                                        var agressor = (await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("aggressorID", data)))?.name;
+                                                        var aggCorp = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("aggressorCorpID", data)))?.name;
+                                                        var aggAllyId = GetData("aggressorAllianceID", data);
+                                                        var aggAlly = string.IsNullOrEmpty(aggAllyId) || aggAllyId == "0"
+                                                            ? null
+                                                            : (await APIHelper.ESIAPI.GetAllianceData(Reason, aggAllyId))?.ticker;
+                                                        var aggText = $"{agressor} - {aggCorp}{(string.IsNullOrEmpty(aggAlly) ? null : $"[{aggAlly}]")}";
+                                                        var exitTime = DateTime.FromFileTime(Convert.ToInt64(GetData("reinforceExitTime", data)));
 
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
 
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgCitUnderAttack)
-                                                        .WithAuthor(author => author.WithName(LM.Get("NotifyHeader_OrbitalReinforced",
-                                                                struc?.name, feederCorp?.name, exitTime))
-                                                            .WithUrl($"https://zkillboard.com/character/{GetData("aggressorID", data)}"))
-                                                        .AddField(LM.Get("Location"), $"{systemName} - {planet?.name ?? LM.Get("Unknown")}", true)
-                                                        .AddField(LM.Get("Aggressor"), aggText, true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgCitUnderAttack)
+                                                            .WithAuthor(author => author.WithName(LM.Get("NotifyHeader_OrbitalReinforced",
+                                                                    struc?.name, feederCorp?.name, exitTime))
+                                                                .WithUrl($"https://zkillboard.com/character/{GetData("aggressorID", data)}"))
+                                                            .AddField(LM.Get("Location"), $"{systemName} - {planet?.name ?? LM.Get("Unknown")}", true)
+                                                            .AddField(LM.Get("Aggressor"), aggText, true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
 
                                                 case "StructureUnderAttack":
-                                                {
-                                                    //"text": "allianceID: 99007289\nallianceLinkData:\n- showinfo\n- 16159\n- 99007289\nallianceName: Federation Uprising\narmorPercentage: 100.0\ncharID: 96734115\ncorpLinkData:\n- showinfo\n- 2\n- 98502090\ncorpName: Federal Vanguard\nhullPercentage: 100.0\nshieldPercentage: 99.93084364472988\nsolarsystemID: 30003842\nstructureID: &id001 1026660410904\nstructureShowInfoData:\n- showinfo\n- 35832\n- *id001\nstructureTypeID: 35832\n"
-
-                                                    var aggCharId = GetData("charID", data);
-
-                                                    //skip NPC bash
-                                                    if (APIHelper.ESIAPI.IsNpcCharacter(aggCharId) && filter.SpecialSettings
-                                                        .DoNotReportNpcBashForCitadels)
                                                     {
-                                                        break;
-                                                    }
-                                                    var agressor = await APIHelper.ESIAPI.GetCharacterData(Reason, aggCharId);
+                                                        //"text": "allianceID: 99007289\nallianceLinkData:\n- showinfo\n- 16159\n- 99007289\nallianceName: Federation Uprising\narmorPercentage: 100.0\ncharID: 96734115\ncorpLinkData:\n- showinfo\n- 2\n- 98502090\ncorpName: Federal Vanguard\nhullPercentage: 100.0\nshieldPercentage: 99.93084364472988\nsolarsystemID: 30003842\nstructureID: &id001 1026660410904\nstructureShowInfoData:\n- showinfo\n- 35832\n- *id001\nstructureTypeID: 35832\n"
+
+                                                        var aggCharId = GetData("charID", data);
+
+                                                        //skip NPC bash
+                                                        if (APIHelper.ESIAPI.IsNpcCharacter(aggCharId) && filter.SpecialSettings
+                                                            .DoNotReportNpcBashForCitadels)
+                                                        {
+                                                            break;
+                                                        }
+                                                        var agressor = await APIHelper.ESIAPI.GetCharacterData(Reason, aggCharId);
 
                                                         var aggName = agressor?.name;
-                                                    var aggCorp = GetData("corpName", data);
-                                                    var aggAllyId = GetData("allianceID", data);
-                                                    var aggAlly = string.IsNullOrEmpty(aggAllyId) || aggAllyId == "0"
-                                                        ? null
-                                                        : (await APIHelper.ESIAPI.GetAllianceData(Reason, aggAllyId))?.ticker;
-                                                    var aggText = $"{aggName} - {aggCorp}{(string.IsNullOrEmpty(aggAlly) ? null : $"[{aggAlly}]")}";
+                                                        var aggCorp = GetData("corpName", data);
+                                                        var aggAllyId = GetData("allianceID", data);
+                                                        var aggAlly = string.IsNullOrEmpty(aggAllyId) || aggAllyId == "0"
+                                                            ? null
+                                                            : (await APIHelper.ESIAPI.GetAllianceData(Reason, aggAllyId))?.ticker;
+                                                        var aggText = $"{aggName} - {aggCorp}{(string.IsNullOrEmpty(aggAlly) ? null : $"[{aggAlly}]")}";
 
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgCitUnderAttack)
-                                                        .WithAuthor(author => author.WithName(LM.Get("NotifyHeader_StructureUnderAttack",
-                                                                structureType == null ? LM.Get("structure").ToLower() : structureType.name))
-                                                            .WithUrl($"https://zkillboard.com/character/{aggCharId}"))
-                                                        .AddField(LM.Get("System"), systemName, true)
-                                                        .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
-                                                        .AddField(LM.Get("Aggressor"), aggText, true) //.WithUrl(")
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgCitUnderAttack)
+                                                            .WithAuthor(author => author.WithName(LM.Get("NotifyHeader_StructureUnderAttack",
+                                                                    structureType == null ? LM.Get("structure").ToLower() : structureType.name))
+                                                                .WithUrl($"https://zkillboard.com/character/{aggCharId}"))
+                                                            .AddField(LM.Get("System"), systemName, true)
+                                                            .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
+                                                            .AddField(LM.Get("Aggressor"), aggText, true) //.WithUrl(")
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                    break;
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                        break;
+                                                    }
 
                                                 case "StructureWentLowPower":
                                                 case "StructureWentHighPower":
-                                                {
-                                                    //"text": "solarsystemID: 30045335\nstructureID: &id001 1026192163696\nstructureShowInfoData:\n- showinfo\n- 35835\n- *id001\nstructureTypeID: 35835\n"
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var color = notification.type == "StructureWentLowPower" ? new Color(0xdd5353) : new Color(0x00ff00);
-                                                    var text = notification.type == "StructureWentLowPower" ? LM.Get("LowPower") : LM.Get("HighPower");
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(color)
-                                                        .WithThumbnailUrl(Settings.Resources.ImgCitLowPower)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(LM.Get("StructureWentLowPower",
-                                                                (structureType == null ? LM.Get("structure").ToLower() : structureType.name) ?? LM.Get("Unknown"), text)))
-                                                        .AddField(LM.Get("System"), systemName, true)
-                                                        .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        //"text": "solarsystemID: 30045335\nstructureID: &id001 1026192163696\nstructureShowInfoData:\n- showinfo\n- 35835\n- *id001\nstructureTypeID: 35835\n"
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var color = notification.type == "StructureWentLowPower" ? new Color(0xdd5353) : new Color(0x00ff00);
+                                                        var text = notification.type == "StructureWentLowPower" ? LM.Get("LowPower") : LM.Get("HighPower");
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(color)
+                                                            .WithThumbnailUrl(Settings.Resources.ImgCitLowPower)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(LM.Get("StructureWentLowPower",
+                                                                    (structureType == null ? LM.Get("structure").ToLower() : structureType.name) ?? LM.Get("Unknown"), text)))
+                                                            .AddField(LM.Get("System"), systemName, true)
+                                                            .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "StructureLostArmor":
                                                 case "StructureLostShields":
-                                                {
-                                                    // "text": "solarsystemID: 30003842\nstructureID: &id001 1026660410904\nstructureShowInfoData:\n- showinfo\n- 35832\n- *id001\nstructureTypeID: 35832\ntimeLeft: 1557974732906\ntimestamp: 131669979190000000\nvulnerableTime: 9000000000\n"
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    textAdd = notification.type == "StructureLostArmor" ? LM.Get("armorSmall") : LM.Get("shieldSmall");
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithThumbnailUrl(notification.type == "StructureLostShields"
-                                                            ? Settings.Resources.ImgCitLostShield
-                                                            : Settings.Resources.ImgCitLostArmor)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(LM.Get("StructureLostArmor",
-                                                                structureType == null ? LM.Get("Structure") : structureType.name, textAdd)))
-                                                        .AddField(LM.Get("System"), systemName, true)
-                                                        .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
-                                                        .AddField("Time Left", timeleft ?? LM.Get("Unknown"), true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
-
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-
-                                                    if (Settings.Config.ModuleTimers && Settings.TimersModule.AutoAddTimerForReinforceNotifications)
                                                     {
-                                                        await SQLHelper.UpdateTimer(new TimerItem
+                                                        // "text": "solarsystemID: 30003842\nstructureID: &id001 1026660410904\nstructureShowInfoData:\n- showinfo\n- 35832\n- *id001\nstructureTypeID: 35832\ntimeLeft: 1557974732906\ntimestamp: 131669979190000000\nvulnerableTime: 9000000000\n"
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        textAdd = notification.type == "StructureLostArmor" ? LM.Get("armorSmall") : LM.Get("shieldSmall");
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithThumbnailUrl(notification.type == "StructureLostShields"
+                                                                ? Settings.Resources.ImgCitLostShield
+                                                                : Settings.Resources.ImgCitLostArmor)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(LM.Get("StructureLostArmor",
+                                                                    structureType == null ? LM.Get("Structure") : structureType.name, textAdd)))
+                                                            .AddField(LM.Get("System"), systemName, true)
+                                                            .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
+                                                            .AddField("Time Left", timeleft ?? LM.Get("Unknown"), true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
+
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+
+                                                        if (Settings.Config.ModuleTimers && Settings.TimersModule.AutoAddTimerForReinforceNotifications)
                                                         {
-                                                            timerChar = "Auto",
-                                                            timerET = (timestamp + TimeSpan.FromTicks(Convert.ToInt64(strTime))).ToString(),
-                                                            timerLocation = $"{systemName} - {structureType.name} - {structure?.name}",
-                                                            timerStage = notification.type == "StructureLostShields" ? 2 : 1,
-                                                            timerType = 2,
-                                                            timerOwner = "Alliance"
-                                                        });
+                                                            await SQLHelper.UpdateTimer(new TimerItem
+                                                            {
+                                                                timerChar = "Auto",
+                                                                timerET = (timestamp + TimeSpan.FromTicks(Convert.ToInt64(strTime))).ToString(),
+                                                                timerLocation = $"{systemName} - {structureType.name} - {structure?.name}",
+                                                                timerStage = notification.type == "StructureLostShields" ? 2 : 1,
+                                                                timerType = 2,
+                                                                timerOwner = "Alliance"
+                                                            });
+                                                        }
                                                     }
-                                                }
                                                     break;
                                                 case "StructureDestroyed":
                                                 case "StructureOnline":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var owner = GetData("ownerCorpName", data) ?? LM.Get("Unknown");
-                                                    var iUrl = notification.type == "StructureDestroyed"
-                                                        ? Settings.Resources.ImgCitDestroyed
-                                                        : Settings.Resources.ImgCitOnline;
-                                                    var text = notification.type == "StructureDestroyed"
-                                                        ? LM.Get("StructureDestroyed", owner, structureType == null ? LM.Get("Unknown") : structureType.name)
-                                                        : LM.Get("StructureOnline", structureType == null ? LM.Get("Unknown") : structureType.name);
-                                                    var color = notification.type == "StructureDestroyed" ? new Color(0xdd5353) : new Color(0x00ff00);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(color)
-                                                        .WithThumbnailUrl(iUrl)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(text))
-                                                        .AddField(LM.Get("System"), systemName, true)
-                                                        .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var owner = GetData("ownerCorpName", data) ?? LM.Get("Unknown");
+                                                        var iUrl = notification.type == "StructureDestroyed"
+                                                            ? Settings.Resources.ImgCitDestroyed
+                                                            : Settings.Resources.ImgCitOnline;
+                                                        var text = notification.type == "StructureDestroyed"
+                                                            ? LM.Get("StructureDestroyed", owner, structureType == null ? LM.Get("Unknown") : structureType.name)
+                                                            : LM.Get("StructureOnline", structureType == null ? LM.Get("Unknown") : structureType.name);
+                                                        var color = notification.type == "StructureDestroyed" ? new Color(0xdd5353) : new Color(0x00ff00);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(color)
+                                                            .WithThumbnailUrl(iUrl)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(text))
+                                                            .AddField(LM.Get("System"), systemName, true)
+                                                            .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "StructureAnchoring":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var owner = GetData("ownerCorpName", data) ?? LM.Get("Unknown");
-                                                    var text = LM.Get("StructureAnchoring", owner,
-                                                        structureType == null ? LM.Get("Structure") : structureType.name);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xff0000))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgCitAnchoring)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(text))
-                                                        .AddField(LM.Get("System"), systemName, true)
-                                                        .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
-                                                        .AddField(LM.Get("TimeLeft"), timeleft ?? LM.Get("Unknown"), true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var owner = GetData("ownerCorpName", data) ?? LM.Get("Unknown");
+                                                        var text = LM.Get("StructureAnchoring", owner,
+                                                            structureType == null ? LM.Get("Structure") : structureType.name);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xff0000))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgCitAnchoring)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(text))
+                                                            .AddField(LM.Get("System"), systemName, true)
+                                                            .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
+                                                            .AddField(LM.Get("TimeLeft"), timeleft ?? LM.Get("Unknown"), true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "AllAnchoringMsg":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var corpName = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data) ?? null))?.name ?? LM.Get("Unknown");
-                                                    var allianceName = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("allianceID", data) ?? null))?.name;
-                                                    var typeName = (await APIHelper.ESIAPI.GetTypeId(Reason, GetData("typeID", data)))?.name ?? LM.Get("Unknown");
-                                                    var moonName = (await APIHelper.ESIAPI.GetMoon(Reason, GetData("moonID", data)))?.name ?? LM.Get("Unknown");
-                                                    var text = LM.Get("PosAnchoring", string.IsNullOrEmpty(allianceName) ? corpName : $"{allianceName} - {corpName}");
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xff0000))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgCitAnchoring)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(text))
-                                                        .AddField(LM.Get("System"), $"{systemName} {LM.Get("AtSmall")} {moonName}", true)
-                                                        .AddField(LM.Get("Structure"), typeName, true)
-                                                        .AddField(LM.Get("TimeLeft"), timeleft ?? LM.Get("Unknown"), true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var corpName = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data) ?? null))?.name ?? LM.Get("Unknown");
+                                                        var allianceName = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("allianceID", data) ?? null))?.name;
+                                                        var typeName = (await APIHelper.ESIAPI.GetTypeId(Reason, GetData("typeID", data)))?.name ?? LM.Get("Unknown");
+                                                        var moonName = (await APIHelper.ESIAPI.GetMoon(Reason, GetData("moonID", data)))?.name ?? LM.Get("Unknown");
+                                                        var text = LM.Get("PosAnchoring", string.IsNullOrEmpty(allianceName) ? corpName : $"{allianceName} - {corpName}");
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xff0000))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgCitAnchoring)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(text))
+                                                            .AddField(LM.Get("System"), $"{systemName} {LM.Get("AtSmall")} {moonName}", true)
+                                                            .AddField(LM.Get("Structure"), typeName, true)
+                                                            .AddField(LM.Get("TimeLeft"), timeleft ?? LM.Get("Unknown"), true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "StructureUnanchoring":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var owner = GetData("ownerCorpName", data) ?? LM.Get("Unknown");
-                                                    var text = LM.Get("StructureUnanchoring", owner,
-                                                        structureType == null ? LM.Get("Structure") : structureType.name);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xff0000))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgCitAnchoring)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(text))
-                                                        .AddField(LM.Get("System"), systemName, true)
-                                                        .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
-                                                        .AddField(LM.Get("TimeLeft"), timeleft ?? LM.Get("Unknown"), true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var owner = GetData("ownerCorpName", data) ?? LM.Get("Unknown");
+                                                        var text = LM.Get("StructureUnanchoring", owner,
+                                                            structureType == null ? LM.Get("Structure") : structureType.name);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xff0000))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgCitAnchoring)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(text))
+                                                            .AddField(LM.Get("System"), systemName, true)
+                                                            .AddField(LM.Get("Structure"), structure?.name ?? LM.Get("Unknown"), true)
+                                                            .AddField(LM.Get("TimeLeft"), timeleft ?? LM.Get("Unknown"), true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "StructureFuelAlert":
                                                     //"text": "listOfTypesAndQty:\n- - 307\n  - 4246\nsolarsystemID: 30045331\nstructureID: &id001 1027052813591\nstructureShowInfoData:\n- showinfo\n- 35835\n- *id001\nstructureTypeID: 35835\n"
@@ -641,66 +643,66 @@ typeID: 2233",
                                                     break;
                                                 case "CorpBecameWarEligible":
                                                 case "CorpNoLongerWarEligible":
-                                                {
-                                                    var isEligible = notification.type == "CorpBecameWarEligible";
-                                                    var color = isEligible ? new Color(0xFF0000) : new Color(0x00FF00);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(color);
-                                                    var corp = feederCorp?.name ?? LM.Get("Unknown");
-                                                    var text = isEligible ? LM.Get("notifCorpWarEligible", corp) : LM.Get("notifCorpNotWarEligible", corp);
-                                                    builder.WithAuthor(author => author.WithName(text))
-                                                        .WithThumbnailUrl(isEligible ? Settings.Resources.ImgBecameWarEligible : Settings.Resources.ImgNoLongerWarEligible)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        var isEligible = notification.type == "CorpBecameWarEligible";
+                                                        var color = isEligible ? new Color(0xFF0000) : new Color(0x00FF00);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(color);
+                                                        var corp = feederCorp?.name ?? LM.Get("Unknown");
+                                                        var text = isEligible ? LM.Get("notifCorpWarEligible", corp) : LM.Get("notifCorpNotWarEligible", corp);
+                                                        builder.WithAuthor(author => author.WithName(text))
+                                                            .WithThumbnailUrl(isEligible ? Settings.Resources.ImgBecameWarEligible : Settings.Resources.ImgNoLongerWarEligible)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
 
                                                 case "MutualWarInviteAccepted":
                                                 case "MutualWarInviteRejected":
                                                 case "MutualWarInviteSent":
                                                 case "MutualWarExpired":
-                                                {
-                                                    var corp = feederAlliance?.name ?? feederCorp?.name ?? LM.Get("Unknown");
-                                                    var color = new Color(0x00FF00);
-                                                    string text;
-                                                    string image;
-                                                    switch (notification.type)
                                                     {
-                                                        case "MutualWarInviteAccepted":
-                                                            text = LM.Get("notifMutualWarInviteAccepted", corp);
-                                                            image = Settings.Resources.ImgWarInviteAccepted;
-                                                            break;
-                                                        case "MutualWarInviteRejected":
-                                                            color = new Color(0xFF0000);
-                                                            text = LM.Get("notifMutualWarInviteRejected", corp);
-                                                            image = Settings.Resources.ImgWarInviteRejected;
-                                                            break;
-                                                        case "MutualWarInviteSent":
-                                                            text = LM.Get("notifMutualWarInviteSent", corp);
-                                                            image = Settings.Resources.ImgWarInviteSent;
-                                                            break;
-                                                        case "MutualWarExpired":
-                                                            color = new Color(0xFF0000);
-                                                            text = LM.Get("notifMutualWarExpired", corp);
-                                                            image = Settings.Resources.ImgWarInvalidate;
-                                                            break;
-                                                        default:
-                                                            return;
+                                                        var corp = feederAlliance?.name ?? feederCorp?.name ?? LM.Get("Unknown");
+                                                        var color = new Color(0x00FF00);
+                                                        string text;
+                                                        string image;
+                                                        switch (notification.type)
+                                                        {
+                                                            case "MutualWarInviteAccepted":
+                                                                text = LM.Get("notifMutualWarInviteAccepted", corp);
+                                                                image = Settings.Resources.ImgWarInviteAccepted;
+                                                                break;
+                                                            case "MutualWarInviteRejected":
+                                                                color = new Color(0xFF0000);
+                                                                text = LM.Get("notifMutualWarInviteRejected", corp);
+                                                                image = Settings.Resources.ImgWarInviteRejected;
+                                                                break;
+                                                            case "MutualWarInviteSent":
+                                                                text = LM.Get("notifMutualWarInviteSent", corp);
+                                                                image = Settings.Resources.ImgWarInviteSent;
+                                                                break;
+                                                            case "MutualWarExpired":
+                                                                color = new Color(0xFF0000);
+                                                                text = LM.Get("notifMutualWarExpired", corp);
+                                                                image = Settings.Resources.ImgWarInvalidate;
+                                                                break;
+                                                            default:
+                                                                return;
+                                                        }
+
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(color)
+                                                            .WithAuthor(author => author.WithName(text))
+                                                            .WithThumbnailUrl(image)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
+
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
                                                     }
-
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(color)
-                                                        .WithAuthor(author => author.WithName(text))
-                                                        .WithThumbnailUrl(image)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
-
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
                                                     break;
 
                                                 case "AllMaintenanceBillMsg":
@@ -712,74 +714,74 @@ typeID: 2233",
                                                 case "CorpNewCEOMsg":
                                                 case "CorpTaxChangeMsg":
                                                 case "OwnershipTransferred":
-                                                {
-                                                    var ally = feederAlliance?.name ?? LM.Get("Unknown");
-                                                    var corp = feederCorp?.name ?? LM.Get("Unknown");
-                                                    var color = new Color(0x00FF00);
-                                                    string text;
-                                                    string image;
-                                                    switch (notification.type)
                                                     {
-                                                        case "AllMaintenanceBillMsg":
-                                                            text = LM.Get("notifAllMaintenanceBillMsg", ally, GetData("dueDate", data)?.ToEveTimeString());
-                                                            image = Settings.Resources.ImgAllMaintenanceBillMsg;
-                                                            break;
-                                                        case "BillOutOfMoneyMsg":
-                                                            color = new Color(0xFF0000);
-                                                            var btype = (await APIHelper.ESIAPI.GetTypeId(Reason, GetData("billTypeID", data)))?.name;
-                                                            text = LM.Get("notifBillOutOfMoneyMsg", corp, btype, GetData("dueDate", data)?.ToEveTimeString());
-                                                            image = Settings.Resources.ImgBillOutOfMoneyMsg;
-                                                            break;
-                                                        case "AllianceCapitalChanged":
-                                                            var allyId = GetData("allianceID", data);
-                                                            var accAlly = string.IsNullOrEmpty(allyId) ? null : (await APIHelper.ESIAPI.GetAllianceData(Reason, allyId))?.name;
-                                                            text = LM.Get("notifAllianceCapitalChanged", accAlly, system?.name);
-                                                            image = Settings.Resources.ImgAllMaintenanceBillMsg;
-                                                            break;
-                                                        case "BountyPlacedAlliance":
-                                                            color = new Color(0xFF0000);
-                                                            var placer = await APIHelper.ESIAPI.GetMemberEntityProperty(Reason, GetData("bountyPlacerID", data), "Name");
-                                                            text = LM.Get("notifBountyPlacedAlliance", ally, placer, Convert.ToInt64(GetData("bounty", data)).ToKMB());
-                                                            image = Settings.Resources.ImgBountyPlacedAlliance;
-                                                            break;
-                                                        case "CorpKicked":
-                                                            color = new Color(0xFF0000);
-                                                            var kcorp = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data)))?.name;
-                                                            text = LM.Get("notifCorpKicked", kcorp, ally);
-                                                            image = Settings.Resources.ImgCorpKicked;
-                                                            break;
-                                                        case "CorpNewCEOMsg":
-                                                            var ccorp = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data)))?.name;
-                                                            var newCeo = await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("newCeoID", data));
-                                                            var oldCeo = await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("oldCeoID", data));
-                                                            text = LM.Get("notifCorpNewCEOMsg", ccorp, newCeo?.name, oldCeo?.name);
-                                                            image = Settings.Resources.ImgCorpNewCEOMsg;
-                                                            break;
-                                                        case "CorpTaxChangeMsg":
-                                                            var corp1 = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data)))?.name;
-                                                            text = LM.Get("notifCorpTaxChangeMsg", corp1, GetData("oldTaxRate", data), GetData("newTaxRate", data));
-                                                            image = Settings.Resources.ImgCorpTaxChangeMsg;
-                                                            break;
-                                                        case "OwnershipTransferred":
-                                                            var oldOwner = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("oldOwnerCorpID", data));
-                                                            var newOwner = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("newOwnerCorpID", data));
-                                                            text = LM.Get("notifOwnershipTransferred", GetData("structureName", data), oldOwner?.name, newOwner?.name);
-                                                            image = Settings.Resources.ImgCitFuelAlert;
-                                                            break;
-                                                        default:
-                                                            return;
+                                                        var ally = feederAlliance?.name ?? LM.Get("Unknown");
+                                                        var corp = feederCorp?.name ?? LM.Get("Unknown");
+                                                        var color = new Color(0x00FF00);
+                                                        string text;
+                                                        string image;
+                                                        switch (notification.type)
+                                                        {
+                                                            case "AllMaintenanceBillMsg":
+                                                                text = LM.Get("notifAllMaintenanceBillMsg", ally, GetData("dueDate", data)?.ToEveTimeString());
+                                                                image = Settings.Resources.ImgAllMaintenanceBillMsg;
+                                                                break;
+                                                            case "BillOutOfMoneyMsg":
+                                                                color = new Color(0xFF0000);
+                                                                var btype = (await APIHelper.ESIAPI.GetTypeId(Reason, GetData("billTypeID", data)))?.name;
+                                                                text = LM.Get("notifBillOutOfMoneyMsg", corp, btype, GetData("dueDate", data)?.ToEveTimeString());
+                                                                image = Settings.Resources.ImgBillOutOfMoneyMsg;
+                                                                break;
+                                                            case "AllianceCapitalChanged":
+                                                                var allyId = GetData("allianceID", data);
+                                                                var accAlly = string.IsNullOrEmpty(allyId) ? null : (await APIHelper.ESIAPI.GetAllianceData(Reason, allyId))?.name;
+                                                                text = LM.Get("notifAllianceCapitalChanged", accAlly, system?.name);
+                                                                image = Settings.Resources.ImgAllMaintenanceBillMsg;
+                                                                break;
+                                                            case "BountyPlacedAlliance":
+                                                                color = new Color(0xFF0000);
+                                                                var placer = await APIHelper.ESIAPI.GetMemberEntityProperty(Reason, GetData("bountyPlacerID", data), "Name");
+                                                                text = LM.Get("notifBountyPlacedAlliance", ally, placer, Convert.ToInt64(GetData("bounty", data)).ToKMB());
+                                                                image = Settings.Resources.ImgBountyPlacedAlliance;
+                                                                break;
+                                                            case "CorpKicked":
+                                                                color = new Color(0xFF0000);
+                                                                var kcorp = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data)))?.name;
+                                                                text = LM.Get("notifCorpKicked", kcorp, ally);
+                                                                image = Settings.Resources.ImgCorpKicked;
+                                                                break;
+                                                            case "CorpNewCEOMsg":
+                                                                var ccorp = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data)))?.name;
+                                                                var newCeo = await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("newCeoID", data));
+                                                                var oldCeo = await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("oldCeoID", data));
+                                                                text = LM.Get("notifCorpNewCEOMsg", ccorp, newCeo?.name, oldCeo?.name);
+                                                                image = Settings.Resources.ImgCorpNewCEOMsg;
+                                                                break;
+                                                            case "CorpTaxChangeMsg":
+                                                                var corp1 = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data)))?.name;
+                                                                text = LM.Get("notifCorpTaxChangeMsg", corp1, GetData("oldTaxRate", data), GetData("newTaxRate", data));
+                                                                image = Settings.Resources.ImgCorpTaxChangeMsg;
+                                                                break;
+                                                            case "OwnershipTransferred":
+                                                                var oldOwner = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("oldOwnerCorpID", data));
+                                                                var newOwner = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("newOwnerCorpID", data));
+                                                                text = LM.Get("notifOwnershipTransferred", GetData("structureName", data), oldOwner?.name, newOwner?.name);
+                                                                image = Settings.Resources.ImgCitFuelAlert;
+                                                                break;
+                                                            default:
+                                                                return;
+                                                        }
+
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(color)
+                                                            .WithAuthor(author => author.WithName(text))
+                                                            .WithThumbnailUrl(image)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
+
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
                                                     }
-
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(color)
-                                                        .WithAuthor(author => author.WithName(text))
-                                                        .WithThumbnailUrl(image)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
-
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
                                                     break;
 
                                                 case "WarAdopted":
@@ -791,266 +793,280 @@ typeID: 2233",
                                                 case "WarInvalid":
                                                 case "WarRetracted":
                                                 case "WarRetractedByConcord":
-                                                {
-                                                    var corp = feederAlliance?.name ?? feederCorp?.name ?? LM.Get("Unknown");
-                                                    var color = new Color(0x00FF00);
-                                                    string text;
-                                                    string image;
-
-                                                    var declaredById = GetData("declaredByID", data);
-                                                    var declareByName = !string.IsNullOrEmpty(declaredById)
-                                                        ? ((await APIHelper.ESIAPI.GetAllianceData(Reason, declaredById, true))?.name ?? (await APIHelper.ESIAPI.GetCorporationData(Reason, declaredById, true))?.name)
-                                                        : null;
-                                                    var declaredAgainstId = GetData("againstID", data);
-                                                    var declareAgainstName = !string.IsNullOrEmpty(declaredAgainstId)
-                                                        ? ((await APIHelper.ESIAPI.GetAllianceData(Reason, declaredAgainstId, true))?.name ?? (await APIHelper.ESIAPI.GetCorporationData(Reason, declaredAgainstId, true))?.name)
-                                                        : null;
-                                                    var hq = GetData("warHQ", data)?.Replace("<b>", "").Replace("</b>", "");
-
-                                                    switch (notification.type)
                                                     {
-                                                        case "WarAdopted":
-                                                            color = new Color(0xFF0000);
-                                                            text = LM.Get("notifWarAdopted", declareByName, declareAgainstName);
-                                                            image = Settings.Resources.ImgWarDeclared;
-                                                            break;
-                                                        case "WarAllyInherited":
-                                                            text = LM.Get("notifWarAllyInherited", corp);
-                                                            image = Settings.Resources.ImgWarInviteSent;
-                                                            break;
-                                                        case "WarConcordInvalidates":
-                                                            text = LM.Get("notifWarConcordInvalidates", declareByName, declareAgainstName);
-                                                            image = Settings.Resources.ImgWarInvalidate;
-                                                            break;
-                                                        case "WarDeclared":
-                                                            color = new Color(0xFF0000);
-                                                            text = LM.Get("notifWarDeclared", declareByName, declareAgainstName, hq);
-                                                            image = Settings.Resources.ImgWarDeclared;
-                                                            break;
-                                                        case "WarHQRemovedFromSpace":
-                                                            color = new Color(0xFF0000);
-                                                            text = LM.Get("notifWarHQRemovedFromSpace", corp);
-                                                            image = Settings.Resources.ImgCitDestroyed;
-                                                            break;
-                                                        case "WarInherited":
-                                                            /*WarInherited [1092637000]
-                                                            againstID: 99008923
-                                                            allianceID: 99001134
-                                                            declaredByID: 99001134
-                                                            opponentID: 99008923
-                                                            quitterID: 98608854*/
-                                                            color = new Color(0xFF0000);
-                                                            text = LM.Get("notifWarInherited", declareByName, declareAgainstName);
-                                                            image = Settings.Resources.ImgWarInviteSent;
-                                                            break;
-                                                        case "WarInvalid":
-                                                            text = LM.Get("notifWarInvalid", declareByName, declareAgainstName);
-                                                            image = Settings.Resources.ImgWarInvalidate;
-                                                            break;
-                                                        case "WarRetracted":
-                                                            text = LM.Get("notifWarRetracted", declareByName, declareAgainstName);
-                                                            image = Settings.Resources.ImgWarInvalidate;
-                                                            break;
-                                                        case "WarRetractedByConcord":
-                                                            text = LM.Get("notifWarRetractedByConcord", declareByName, declareAgainstName);
-                                                            image = Settings.Resources.ImgWarInvalidate;
-                                                            break;
-                                                        default:
-                                                            return;
+                                                        var corp = feederAlliance?.name ?? feederCorp?.name ?? LM.Get("Unknown");
+                                                        var color = new Color(0x00FF00);
+                                                        string text;
+                                                        string image;
+
+                                                        var declaredById = GetData("declaredByID", data);
+                                                        var declareByName = !string.IsNullOrEmpty(declaredById)
+                                                            ? ((await APIHelper.ESIAPI.GetAllianceData(Reason, declaredById, true))?.name ?? (await APIHelper.ESIAPI.GetCorporationData(Reason, declaredById, true))?.name)
+                                                            : null;
+                                                        var declaredAgainstId = GetData("againstID", data);
+                                                        var declareAgainstName = !string.IsNullOrEmpty(declaredAgainstId)
+                                                            ? ((await APIHelper.ESIAPI.GetAllianceData(Reason, declaredAgainstId, true))?.name ?? (await APIHelper.ESIAPI.GetCorporationData(Reason, declaredAgainstId, true))?.name)
+                                                            : null;
+                                                        var hq = GetData("warHQ", data)?.Replace("<b>", "").Replace("</b>", "");
+
+                                                        switch (notification.type)
+                                                        {
+                                                            case "WarAdopted":
+                                                                color = new Color(0xFF0000);
+                                                                text = LM.Get("notifWarAdopted", declareByName, declareAgainstName);
+                                                                image = Settings.Resources.ImgWarDeclared;
+                                                                break;
+                                                            case "WarAllyInherited":
+                                                                text = LM.Get("notifWarAllyInherited", corp);
+                                                                image = Settings.Resources.ImgWarInviteSent;
+                                                                break;
+                                                            case "WarConcordInvalidates":
+                                                                text = LM.Get("notifWarConcordInvalidates", declareByName, declareAgainstName);
+                                                                image = Settings.Resources.ImgWarInvalidate;
+                                                                break;
+                                                            case "WarDeclared":
+                                                                color = new Color(0xFF0000);
+                                                                text = LM.Get("notifWarDeclared", declareByName, declareAgainstName, hq);
+                                                                image = Settings.Resources.ImgWarDeclared;
+                                                                break;
+                                                            case "WarHQRemovedFromSpace":
+                                                                color = new Color(0xFF0000);
+                                                                text = LM.Get("notifWarHQRemovedFromSpace", corp);
+                                                                image = Settings.Resources.ImgCitDestroyed;
+                                                                break;
+                                                            case "WarInherited":
+                                                                /*WarInherited [1092637000]
+                                                                againstID: 99008923
+                                                                allianceID: 99001134
+                                                                declaredByID: 99001134
+                                                                opponentID: 99008923
+                                                                quitterID: 98608854*/
+                                                                color = new Color(0xFF0000);
+                                                                text = LM.Get("notifWarInherited", declareByName, declareAgainstName);
+                                                                image = Settings.Resources.ImgWarInviteSent;
+                                                                break;
+                                                            case "WarInvalid":
+                                                                text = LM.Get("notifWarInvalid", declareByName, declareAgainstName);
+                                                                image = Settings.Resources.ImgWarInvalidate;
+                                                                break;
+                                                            case "WarRetracted":
+                                                                text = LM.Get("notifWarRetracted", declareByName, declareAgainstName);
+                                                                image = Settings.Resources.ImgWarInvalidate;
+                                                                break;
+                                                            case "WarRetractedByConcord":
+                                                                text = LM.Get("notifWarRetractedByConcord", declareByName, declareAgainstName);
+                                                                image = Settings.Resources.ImgWarInvalidate;
+                                                                break;
+                                                            default:
+                                                                return;
+                                                        }
+
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(color)
+                                                            .WithAuthor(author => author.WithName(text))
+                                                            .WithThumbnailUrl(image)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
+
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
                                                     }
-
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(color)
-                                                        .WithAuthor(author => author.WithName(text))
-                                                        .WithThumbnailUrl(image)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
-
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
                                                     break;
 
                                                 case "CharLeftCorpMsg":
                                                 case "CharAppAcceptMsg":
                                                 case "CorpAppNewMsg":
                                                 case "CharAppWithdrawMsg":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var character = await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("charID", data), true);
-                                                    var corp = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data), true);
-                                                    var text = "";
-                                                    switch (notification.type)
                                                     {
-                                                        case "CharLeftCorpMsg":
-                                                            text = LM.Get("CharLeftCorpMsg", character?.name, corp?.name);
-                                                            break;
-                                                        case "CharAppAcceptMsg":
-                                                            text = LM.Get("CharAppAcceptMsg", character?.name, corp?.name);
-                                                            break;
-                                                        case "CorpAppNewMsg":
-                                                            text = LM.Get("CorpAppNewMsg", character?.name, corp?.name);
-                                                            break;
-                                                        case "CharAppWithdrawMsg":
-                                                            text = LM.Get("CharAppWithdrawMsg", character?.name, corp?.name);
-                                                            break;
-                                                    }
-
-                                                    var applicationText = string.Empty;
-                                                    if(notification.type != "CharLeftCorpMsg")
-                                                    {
-                                                        //GetData("applicationText", data);
-
-                                                        var sb = new StringBuilder();
-                                                        foreach (var (key, value) in data)
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var character = await APIHelper.ESIAPI.GetCharacterData(Reason, GetData("charID", data), true);
+                                                        var corp = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("corpID", data), true);
+                                                        var text = "";
+                                                        string NPCCorpWarning = null;
+                                                        switch (notification.type)
                                                         {
-                                                            if (key.Equals("applicationText", StringComparison.OrdinalIgnoreCase))
-                                                            {
-                                                                sb.Append(value);
-                                                                sb.Append(" ");
-                                                                continue;
-                                                            }
-
-                                                            if (key == "charID" || key == "corpID")
+                                                            case "CharLeftCorpMsg":
+                                                                text = LM.Get("CharLeftCorpMsg", character?.name, corp?.name);
                                                                 break;
-                                                            sb.Append(key);
-                                                            sb.Append(" ");
-                                                            sb.Append(value);
+                                                            case "CharAppAcceptMsg":
+                                                                text = LM.Get("CharAppAcceptMsg", character?.name, corp?.name);
+                                                                break;
+                                                            case "CorpAppNewMsg":
+                                                                {
+                                                                    var NPCCorps = await APIHelper.ESIAPI.GetNpcCorps(Reason);
+                                                                    var CharacterAffiliation = await APIHelper.ESIAPI.GetCharacterAffiliationData(Reason, new List<long> { character.character_id });
+                                                                    if (!NPCCorps.Contains(CharacterAffiliation.First().corporation_id))
+                                                                    {
+                                                                        NPCCorpWarning = LM.Get("CorpAppNewMsgNpcWarning");
+                                                                    }
+                                                                    text = LM.Get("CorpAppNewMsg", character?.name, corp?.name);
+                                                                    break;
+                                                                }
+                                                            case "CharAppWithdrawMsg":
+                                                                text = LM.Get("CharAppWithdrawMsg", character?.name, corp?.name);
+                                                                break;
                                                         }
 
-                                                        applicationText = sb.ToString();
-                                                    }
-                                                    Color color;
-                                                    if (notification.type == "CharLeftCorpMsg" || notification.type == "CharAppWithdrawMsg")
-                                                    {
-                                                        color = new Color(0xdd5353);
-                                                    }
-                                                    else if (notification.type == "CharAppAcceptMsg")
-                                                    {
-                                                        color = new Color(0x00ff00);
-                                                    }
-                                                    else
-                                                    {
-                                                        color = new Color(0x555555);
-                                                    }
+                                                        var applicationText = string.Empty;
+                                                        if (notification.type != "CharLeftCorpMsg")
+                                                        {
+                                                            //GetData("applicationText", data);
 
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(color);
-                                                    if (!string.IsNullOrEmpty(applicationText) && applicationText != "''")
-                                                    {
-                                                        applicationText = (await MailModule.PrepareBodyMessage(applicationText))[0];
-                                                        applicationText = applicationText.ConvertToCyrillic();
-                                                        builder.WithDescription(applicationText);
+                                                            var sb = new StringBuilder();
+                                                            foreach (var (key, value) in data)
+                                                            {
+                                                                if (key.Equals("applicationText", StringComparison.OrdinalIgnoreCase))
+                                                                {
+                                                                    sb.Append(value);
+                                                                    sb.Append(" ");
+                                                                    continue;
+                                                                }
+
+                                                                if (key == "charID" || key == "corpID")
+                                                                    break;
+                                                                sb.Append(key);
+                                                                sb.Append(" ");
+                                                                sb.Append(value);
+                                                            }
+
+                                                            applicationText = sb.ToString();
+                                                        }
+                                                        Color color;
+                                                        if (notification.type == "CharLeftCorpMsg" || notification.type == "CharAppWithdrawMsg")
+                                                        {
+                                                            color = new Color(0xdd5353);
+                                                        }
+                                                        else if (notification.type == "CharAppAcceptMsg")
+                                                        {
+                                                            color = new Color(0x00ff00);
+                                                        }
+                                                        else
+                                                        {
+                                                            color = new Color(0x555555);
+                                                        }
+
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(color);
+                                                        if (!string.IsNullOrEmpty(applicationText) && applicationText != "''")
+                                                        {
+                                                            applicationText = (await MailModule.PrepareBodyMessage(applicationText))[0];
+                                                            applicationText = applicationText.ConvertToCyrillic();
+                                                            if (!string.IsNullOrWhiteSpace(NPCCorpWarning))
+                                                            {
+                                                                 applicationText = string.Join("\n",applicationText,NPCCorpWarning);
+                                                            }
+
+                                                            builder.WithDescription(applicationText);
+                                                        }
+
+                                                        builder.WithAuthor(author => author.WithName(text).WithUrl($"https://zkillboard.com/character/{GetData("charID", data)}/"))
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
+
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
                                                     }
-
-                                                    builder.WithAuthor(author => author.WithName(text).WithUrl($"https://zkillboard.com/character/{GetData("charID", data)}/"))
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
-
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
                                                     break;
 
                                                 case "SovStructureDestroyed":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithAuthor(
-                                                            author => author.WithName(LM.Get("SovStructureDestroyed", structureType?.name, systemName)))
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithAuthor(
+                                                                author => author.WithName(LM.Get("SovStructureDestroyed", structureType?.name, systemName)))
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
 
                                                 case "SovStationEnteredFreeport":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var exittime = DateTime.FromFileTime(Convert.ToInt64(GetData("freeportexittime", data)));
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithAuthor(
-                                                            author => author.WithName(LM.Get("SovStationEnteredFreeport", structureType?.name, systemName)))
-                                                        .AddField("Exit Time", exittime, true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var exittime = DateTime.FromFileTime(Convert.ToInt64(GetData("freeportexittime", data)));
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithAuthor(
+                                                                author => author.WithName(LM.Get("SovStationEnteredFreeport", structureType?.name, systemName)))
+                                                            .AddField("Exit Time", exittime, true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "StationServiceDisabled":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgCitServicesOffline)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(LM.Get("StationServiceDisabled", structureType?.name, systemName)))
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgCitServicesOffline)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(LM.Get("StationServiceDisabled", structureType?.name, systemName)))
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
 
 
 
                                                 case "SovCommandNodeEventStarted":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var constellation = await APIHelper.ESIAPI.GetConstellationData(Reason, GetData("constellationID", data));
-                                                    var campaignId = Convert.ToInt32(GetData("campaignEventType", data));
-                                                    var cmp = campaignId == 1 ? "1" : (campaignId == 2 ? "2" : "3");
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithAuthor(author =>
-                                                            author.WithName(LM.Get("SovCommandNodeEventStarted", cmp, systemName, constellation?.name)))
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var constellation = await APIHelper.ESIAPI.GetConstellationData(Reason, GetData("constellationID", data));
+                                                        var campaignId = Convert.ToInt32(GetData("campaignEventType", data));
+                                                        var cmp = campaignId == 1 ? "1" : (campaignId == 2 ? "2" : "3");
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithAuthor(author =>
+                                                                author.WithName(LM.Get("SovCommandNodeEventStarted", cmp, systemName, constellation?.name)))
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
 
                                                 case "SovStructureReinforced":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var decloakTime = DateTime.FromFileTime(Convert.ToInt64(GetData("decloakTime", data)));
-                                                    var campaignId = Convert.ToInt32(GetData("campaignEventType", data));
-                                                    var cmp = campaignId == 1 ? "1" : (campaignId == 2 ? "2" : "3");
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithAuthor(author =>
-                                                            author.WithName(LM.Get("SovStructureReinforced", cmp, systemName)))
-                                                        .AddField("Decloak Time", decloakTime.ToString(), true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var decloakTime = DateTime.FromFileTime(Convert.ToInt64(GetData("decloakTime", data)));
+                                                        var campaignId = Convert.ToInt32(GetData("campaignEventType", data));
+                                                        var cmp = campaignId == 1 ? "1" : (campaignId == 2 ? "2" : "3");
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithAuthor(author =>
+                                                                author.WithName(LM.Get("SovStructureReinforced", cmp, systemName)))
+                                                            .AddField("Decloak Time", decloakTime.ToString(), true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
 
                                                 case "EntosisCaptureStarted":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xdd5353))
-                                                        .WithAuthor(
-                                                            author => author.WithName(LM.Get("EntosisCaptureStarted", structureType?.name, systemName)))
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xdd5353))
+                                                            .WithAuthor(
+                                                                author => author.WithName(LM.Get("EntosisCaptureStarted", structureType?.name, systemName)))
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
 
 
@@ -1060,164 +1076,164 @@ typeID: 2233",
                                                 case "CorpWarDeclaredMsg":
                                                 case "AllWarInvalidatedMsg":
                                                 case "CorpWarInvalidatedMsg":
-                                                {
-                                                    //"text": "againstID: 98464487\ncost: 50000000.0\ndeclaredByID: 99005333\ndelayHours: 24\nhostileState: 0\n"
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var declaredById = GetData("declaredByID", data);
-                                                    var declareByAlianceName = !string.IsNullOrEmpty(declaredById)
-                                                        ? (await APIHelper.ESIAPI.GetAllianceData(Reason, declaredById, true))?.name
-                                                        : null;
-                                                    var declareByCorpName = !string.IsNullOrEmpty(declaredById)
-                                                        ? (await APIHelper.ESIAPI.GetCorporationData(Reason, declaredById, true))?.name
-                                                        : null;
-                                                    var declName = declareByAlianceName ?? declareByCorpName ?? LM.Get("Unknown");
-                                                    bool isAllianceDecl = !string.IsNullOrEmpty(declareByAlianceName);
+                                                    {
+                                                        //"text": "againstID: 98464487\ncost: 50000000.0\ndeclaredByID: 99005333\ndelayHours: 24\nhostileState: 0\n"
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var declaredById = GetData("declaredByID", data);
+                                                        var declareByAlianceName = !string.IsNullOrEmpty(declaredById)
+                                                            ? (await APIHelper.ESIAPI.GetAllianceData(Reason, declaredById, true))?.name
+                                                            : null;
+                                                        var declareByCorpName = !string.IsNullOrEmpty(declaredById)
+                                                            ? (await APIHelper.ESIAPI.GetCorporationData(Reason, declaredById, true))?.name
+                                                            : null;
+                                                        var declName = declareByAlianceName ?? declareByCorpName ?? LM.Get("Unknown");
+                                                        bool isAllianceDecl = !string.IsNullOrEmpty(declareByAlianceName);
 
-                                                    var declaredAgainstId = GetData("againstID", data);
-                                                    var declareAgainstAlianceName = !string.IsNullOrEmpty(declaredAgainstId)
-                                                        ? (await APIHelper.ESIAPI.GetAllianceData(Reason, declaredAgainstId, true))?.name
-                                                        : null;
-                                                    var declareAgainstCorpName = !string.IsNullOrEmpty(declaredAgainstId)
-                                                        ? (await APIHelper.ESIAPI.GetCorporationData(Reason, declaredAgainstId, true))?.name
-                                                        : null;
-                                                    var declNameAgainst = declareAgainstAlianceName ?? declareAgainstCorpName ?? LM.Get("Unknown");
-                                                    // bool isAllianceAgainst = !string.IsNullOrEmpty(declareAgainstAlianceName);
+                                                        var declaredAgainstId = GetData("againstID", data);
+                                                        var declareAgainstAlianceName = !string.IsNullOrEmpty(declaredAgainstId)
+                                                            ? (await APIHelper.ESIAPI.GetAllianceData(Reason, declaredAgainstId, true))?.name
+                                                            : null;
+                                                        var declareAgainstCorpName = !string.IsNullOrEmpty(declaredAgainstId)
+                                                            ? (await APIHelper.ESIAPI.GetCorporationData(Reason, declaredAgainstId, true))?.name
+                                                            : null;
+                                                        var declNameAgainst = declareAgainstAlianceName ?? declareAgainstCorpName ?? LM.Get("Unknown");
+                                                        // bool isAllianceAgainst = !string.IsNullOrEmpty(declareAgainstAlianceName);
 
-                                                    var iUrl = notification.type == "AllWarDeclaredMsg" || notification.type == "CorpWarDeclaredMsg"
-                                                        ? Settings.Resources.ImgWarDeclared
-                                                        : Settings.Resources.ImgWarInvalidate;
+                                                        var iUrl = notification.type == "AllWarDeclaredMsg" || notification.type == "CorpWarDeclaredMsg"
+                                                            ? Settings.Resources.ImgWarDeclared
+                                                            : Settings.Resources.ImgWarInvalidate;
 
-                                                    var template = notification.type == "AllWarDeclaredMsg" || notification.type == "CorpWarDeclaredMsg"
-                                                        ? $"{(isAllianceDecl ? LM.Get("Alliance") : LM.Get("Corporation"))} {declName} {LM.Get("declaresWarAgainst")} {declNameAgainst}!"
-                                                        : $"{(isAllianceDecl ? LM.Get("Alliance") : LM.Get("Corporation"))} {declName} {LM.Get("invalidatesWarAgainst")} {declNameAgainst}!";
-                                                    var template2 = notification.type == "AllWarDeclaredMsg" || notification.type == "CorpWarDeclaredMsg"
-                                                        ? LM.Get("fightWillBegin", GetData("delayHours", data))
-                                                        : LM.Get("fightWillEnd", GetData("delayHours", data));
-                                                    var color = notification.type == "AllWarDeclaredMsg" || notification.type == "CorpWarDeclaredMsg"
-                                                        ? new Color(0xdd5353)
-                                                        : new Color(0x00ff00);
+                                                        var template = notification.type == "AllWarDeclaredMsg" || notification.type == "CorpWarDeclaredMsg"
+                                                            ? $"{(isAllianceDecl ? LM.Get("Alliance") : LM.Get("Corporation"))} {declName} {LM.Get("declaresWarAgainst")} {declNameAgainst}!"
+                                                            : $"{(isAllianceDecl ? LM.Get("Alliance") : LM.Get("Corporation"))} {declName} {LM.Get("invalidatesWarAgainst")} {declNameAgainst}!";
+                                                        var template2 = notification.type == "AllWarDeclaredMsg" || notification.type == "CorpWarDeclaredMsg"
+                                                            ? LM.Get("fightWillBegin", GetData("delayHours", data))
+                                                            : LM.Get("fightWillEnd", GetData("delayHours", data));
+                                                        var color = notification.type == "AllWarDeclaredMsg" || notification.type == "CorpWarDeclaredMsg"
+                                                            ? new Color(0xdd5353)
+                                                            : new Color(0x00ff00);
 
-                                                    var url = isAllianceDecl
-                                                        ? $"https://zkillboard.com/alliance/{declaredById}"
-                                                        : $"https://zkillboard.com/corporation/{declaredById}";
+                                                        var url = isAllianceDecl
+                                                            ? $"https://zkillboard.com/alliance/{declaredById}"
+                                                            : $"https://zkillboard.com/corporation/{declaredById}";
 
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(color)
-                                                        .WithThumbnailUrl(iUrl)
-                                                        .WithAuthor(author => author.WithName(template).WithUrl(url))
-                                                        .AddField(LM.Get("Note"), template2, true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(color)
+                                                            .WithThumbnailUrl(iUrl)
+                                                            .WithAuthor(author => author.WithName(template).WithUrl(url))
+                                                            .AddField(LM.Get("Note"), template2, true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "AllyJoinedWarAggressorMsg":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var allyID = GetData("allyID", data);
-                                                    var ally = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("allyID", data)))?.name ??
-                                                               (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("allyID", data)))?.name;
-                                                    var defender = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("defenderID", data)))?.name ??
-                                                                   (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("defenderID", data)))?.name;
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xff0000))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgWarAssist)
-                                                        .WithAuthor(author => author.WithName(LM.Get("AllyJoinedWarAggressorMsg", ally, defender))
-                                                            .WithUrl($"https://zkillboard.com/alliance/{allyID}"))
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var allyID = GetData("allyID", data);
+                                                        var ally = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("allyID", data)))?.name ??
+                                                                   (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("allyID", data)))?.name;
+                                                        var defender = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("defenderID", data)))?.name ??
+                                                                       (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("defenderID", data)))?.name;
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xff0000))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgWarAssist)
+                                                            .WithAuthor(author => author.WithName(LM.Get("AllyJoinedWarAggressorMsg", ally, defender))
+                                                                .WithUrl($"https://zkillboard.com/alliance/{allyID}"))
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "AllyJoinedWarDefenderMsg":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    string allyStr = null;
-                                                    var allyData = await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("allyID", data));
-                                                    if (allyData != null) allyStr = allyData.name;
-                                                    else
                                                     {
-                                                        var corpData = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("allyID", data));
-                                                        allyStr = corpData?.name;
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        string allyStr = null;
+                                                        var allyData = await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("allyID", data));
+                                                        if (allyData != null) allyStr = allyData.name;
+                                                        else
+                                                        {
+                                                            var corpData = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("allyID", data));
+                                                            allyStr = corpData?.name;
+                                                        }
+
+                                                        var defenderStr = string.Empty;
+                                                        allyData = await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("defenderID", data));
+                                                        if (allyData != null) defenderStr = allyData.name;
+                                                        else
+                                                        {
+                                                            var corpData = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("defenderID", data));
+                                                            defenderStr = corpData?.name;
+                                                        }
+
+                                                        var agressorStr = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("aggressorID", data)))?.name;
+                                                        if (agressorStr == null)
+                                                            agressorStr = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("aggressorID", data)))?.name;
+                                                        var allyID = GetData("allyID", data);
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xff0000))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgWarAssist)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(LM.Get("AllyJoinedWarDefenderMsg", allyStr, defenderStr, agressorStr))
+                                                                    .WithUrl($"https://zkillboard.com/alliance/{allyID}"))
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
+
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
                                                     }
-
-                                                    var defenderStr = string.Empty;
-                                                    allyData = await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("defenderID", data));
-                                                    if (allyData != null) defenderStr = allyData.name;
-                                                    else
-                                                    {
-                                                        var corpData = await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("defenderID", data));
-                                                        defenderStr = corpData?.name;
-                                                    }
-
-                                                    var agressorStr = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("aggressorID", data)))?.name;
-                                                    if (agressorStr == null)
-                                                        agressorStr = (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("aggressorID", data)))?.name;
-                                                    var allyID = GetData("allyID", data);
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xff0000))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgWarAssist)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(LM.Get("AllyJoinedWarDefenderMsg", allyStr, defenderStr, agressorStr))
-                                                                .WithUrl($"https://zkillboard.com/alliance/{allyID}"))
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
-
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
                                                     break;
                                                 case "AllyJoinedWarAllyMsg":
-                                                {
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var allyID = GetData("allyID", data);
-                                                    var agressorStr2 = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("aggressorID", data)))?.name ??
-                                                                       (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("aggressorID", data)))?.name;
-                                                    var allyStr2 = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("allyID", data)))?.name ??
-                                                                   (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("allyID", data)))?.name;
-                                                    var defenderStr2 = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("defenderID", data)))?.name ??
-                                                                       (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("defenderID", data)))?.name;
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0x00ff00))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgWarAssist)
-                                                        .WithAuthor(author =>
-                                                            author.WithName(LM.Get("AllyJoinedWarAllyMsg", allyStr2, defenderStr2, agressorStr2))
-                                                                .WithUrl($"https://zkillboard.com/alliance/{allyID}"))
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                    {
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var allyID = GetData("allyID", data);
+                                                        var agressorStr2 = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("aggressorID", data)))?.name ??
+                                                                           (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("aggressorID", data)))?.name;
+                                                        var allyStr2 = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("allyID", data)))?.name ??
+                                                                       (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("allyID", data)))?.name;
+                                                        var defenderStr2 = (await APIHelper.ESIAPI.GetAllianceData(Reason, GetData("defenderID", data)))?.name ??
+                                                                           (await APIHelper.ESIAPI.GetCorporationData(Reason, GetData("defenderID", data)))?.name;
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0x00ff00))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgWarAssist)
+                                                            .WithAuthor(author =>
+                                                                author.WithName(LM.Get("AllyJoinedWarAllyMsg", allyStr2, defenderStr2, agressorStr2))
+                                                                    .WithUrl($"https://zkillboard.com/alliance/{allyID}"))
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                                 case "FWAllianceWarningMsg":
-                                                {
-                                                    //"text": "allianceID: 99005333\ncorpList: <br>Quarian Fleet - standings:-0.0500\nfactionID: 500001\nrequiredStanding: 0.0001\n"
-                                                    await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
-                                                    var allianceId = GetData("allianceID", data);
-                                                    var allyStr3 = !string.IsNullOrEmpty(allianceId)
-                                                        ? (await APIHelper.ESIAPI.GetAllianceData(Reason, allianceId, true))?.name
-                                                        : LM.Get("Unknown");
-                                                    var corpStr3 = data.ContainsKey("corpList")
-                                                        ? data["corpList"].Trim().Replace("<br>", "").Replace(" - standings", "")
-                                                        : LM.Get("Unknown");
-                                                    var required = GetData("requiredStanding", data);
+                                                    {
+                                                        //"text": "allianceID: 99005333\ncorpList: <br>Quarian Fleet - standings:-0.0500\nfactionID: 500001\nrequiredStanding: 0.0001\n"
+                                                        await LogHelper.LogInfo($"Sending Notification ({notification.type})", Category);
+                                                        var allianceId = GetData("allianceID", data);
+                                                        var allyStr3 = !string.IsNullOrEmpty(allianceId)
+                                                            ? (await APIHelper.ESIAPI.GetAllianceData(Reason, allianceId, true))?.name
+                                                            : LM.Get("Unknown");
+                                                        var corpStr3 = data.ContainsKey("corpList")
+                                                            ? data["corpList"].Trim().Replace("<br>", "").Replace(" - standings", "")
+                                                            : LM.Get("Unknown");
+                                                        var required = GetData("requiredStanding", data);
 
-                                                    builder = new EmbedBuilder()
-                                                        .WithColor(new Color(0xff0000))
-                                                        .WithThumbnailUrl(Settings.Resources.ImgLowFWStand)
-                                                        .WithAuthor(author => author.WithName(LM.Get("FWAllianceWarningMsg", allyStr3)))
-                                                        .AddField(LM.Get("BlameCorp"), LM.Get("standMissing", corpStr3, required), true)
-                                                        .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
-                                                        .WithTimestamp(timestamp);
-                                                    embed = builder.Build();
+                                                        builder = new EmbedBuilder()
+                                                            .WithColor(new Color(0xff0000))
+                                                            .WithThumbnailUrl(Settings.Resources.ImgLowFWStand)
+                                                            .WithAuthor(author => author.WithName(LM.Get("FWAllianceWarningMsg", allyStr3)))
+                                                            .AddField(LM.Get("BlameCorp"), LM.Get("standMissing", corpStr3, required), true)
+                                                            .WithFooter($"EVE Time: {timestamp.ToShortDateString()} {timestamp.ToShortTimeString()}")
+                                                            .WithTimestamp(timestamp);
+                                                        embed = builder.Build();
 
-                                                    await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
-                                                }
+                                                        await APIHelper.DiscordAPI.SendMessageAsync(discordChannel, mention, embed).ConfigureAwait(false);
+                                                    }
                                                     break;
                                             }
 
